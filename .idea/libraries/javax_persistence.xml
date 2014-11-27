@@ -1,0 +1,10 @@
+<component name="libraryTable">
+  <library name="javax.persistence">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/../lunjar-orm/lib/javax.persistence.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../lunjar-orm/lib/druid-1.0.5.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
