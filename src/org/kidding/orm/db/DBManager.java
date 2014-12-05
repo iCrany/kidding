@@ -7,6 +7,7 @@ import org.kidding.orm.exception.DataSourceInitException;
 import org.kidding.orm.util.EmptyUtil;
 
 import javax.sql.DataSource;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.sql.*;
@@ -60,13 +61,11 @@ public class DBManager {
      * @param dataSource
      */
     public static void injectDataSource(String alias,DataSource dataSource){
-
-        if(null != dataSourceMap){
+        if(null == dataSourceMap){
             dataSourceMap = new ConcurrentHashMap<String, DataSource>();
         }
 
         dataSourceMap.put(alias,dataSource);
-
     }
 
     /**
