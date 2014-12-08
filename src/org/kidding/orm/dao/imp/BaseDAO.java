@@ -177,7 +177,7 @@ public class BaseDAO<T extends POJO> implements DAO<T>{
         try{
             return _save(entity,true);
         }catch (Exception e){
-            logger.error("fail to force save",e);
+            logger.error("fail to force save!!!",e);
         }
         return 0L;
     }
@@ -251,6 +251,56 @@ public class BaseDAO<T extends POJO> implements DAO<T>{
         return 0;
     }
 
+
+    @Override
+    public Integer deleteAll() {
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        Integer affectedNum = 0;
+        String sqlTemplate = null;
+        String tableName = null;
+
+        try{
+            conn = DBManager.getConnection(dbAlias);
+            tableName = classType.newInstance()._tableName();
+            sqlTemplate = "DELETE FROM " + tableName;
+            pstmt = conn.prepareStatement(sqlTemplate);
+            affectedNum = pstmt.executeUpdate();
+
+        }catch(Exception e){
+            logger.error("fail to delete all data!!!",e);
+        }finally{
+            DBManager.close(pstmt);
+            DBManager.close(conn);
+        }
+        return affectedNum;
+    }
+
+    @Override
+    public Integer batchDelete(List<Integer> idList) {
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        String sqlTemplate = null;
+        Integer affectedNum = 0;
+        T entity = null;
+
+        try{
+            entity = classType.newInstance();
+            conn = DBManager.getConnection(dbAlias);
+            sqlTemplate = sqlParser.batchDelete(entity,idList);
+            pstmt = conn.prepareStatement(sqlTemplate);
+
+            affectedNum = pstmt.executeUpdate();
+        }catch(Exception e){
+            logger.error("fail to delete given list data!!!",e);
+        }finally {
+            DBManager.close(pstmt);
+            DBManager.close(conn);
+        }
+
+        return affectedNum;
+    }
+
     /**
      * 根据条件来进行删除操作
      * @param entity 实体类
@@ -273,12 +323,6 @@ public class BaseDAO<T extends POJO> implements DAO<T>{
 
             affectedNum = pstmt.executeUpdate();
 
-            if(affectedNum > 0){
-                logger.info("delete fail!!");
-            }else{
-                logger.info("delete success!!");
-            }
-
         }finally{
             DBManager.close(pstmt);
             DBManager.close(conn);
@@ -287,19 +331,35 @@ public class BaseDAO<T extends POJO> implements DAO<T>{
         return affectedNum;
     }
 
-    @Override
-    public Integer deleteAll() {
-        return 0;
-    }
 
-    @Override
-    public Integer batchDelete(List<T> entity) {
-        return 0;
-    }
+
 
     @Override
     public T get(T entity,String... params) {
-        return null;
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+        String sqlTemplate = null;
+        T result = null;
+
+        try{
+            conn = DBManager.getConnection(dbAlias);
+            sqlTemplate = sqlParser.list(entity,false,null,null,null,null,null,params);
+            pstmt = conn.prepareStatement(sqlTemplate);
+
+            rs = pstmt.executeQuery();
+
+            result = (T) resultSetParser.parse(classType,rs);
+
+        }catch(Exception e){
+            logger.error("fail to get entity data!!!",e);
+        }finally {
+            DBManager.close(rs);
+            DBManager.close(pstmt);
+            DBManager.close(conn);
+        }
+
+        return result;
     }
 
     @Override
@@ -313,13 +373,37 @@ public class BaseDAO<T extends POJO> implements DAO<T>{
     }
 
     @Override
-    public List<T> listAll(String... params) {
-        return null;
+    public List<T> listAll() {
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+        String tableName = null;
+        String sqlTemplate = null;
+        List<T> result = null;
+
+        try{
+            tableName = classType.newInstance()._tableName();
+            conn = DBManager.getConnection(dbAlias);
+            sqlTemplate = "SELECT * FROM " + tableName;
+            pstmt = conn.prepareStatement(sqlTemplate);
+
+            rs = pstmt.executeQuery();
+            result = resultSetParser.parseList(classType,rs);
+
+        }catch(Exception e){
+            logger.error("fail to list all data!!!",e);
+        }finally {
+            DBManager.close(rs);
+            DBManager.close(pstmt);
+            DBManager.close(conn);
+        }
+
+        return result;
     }
 
     /**
      * 根据条件查找符合条件的条目数
-     * @param entity
+     * @param entity 实体类
      * @param curPage
      * @param pageSize
      * @param condition
@@ -336,7 +420,6 @@ public class BaseDAO<T extends POJO> implements DAO<T>{
 
         String sqlTemplate = null;
         try{
-
             conn = DBManager.getConnection(dbAlias);
             sqlTemplate = sqlParser.list(entity,false,condition,curPage,pageSize,orderBy,groupBy,params);
 

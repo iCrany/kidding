@@ -3,12 +3,14 @@ package org.kidding.orm.parser.impl;
 import org.apache.log4j.Logger;
 import org.kidding.orm.entity.POJO;
 import org.kidding.orm.parser.SqlParser;
+import org.kidding.orm.util.StringUtil;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -85,6 +87,25 @@ public class MySqlParser<T extends POJO> implements SqlParser<T> {
         sql.append(getGroupBy(groupBy));
         sql.append(getOrderBy(orderBy));
         sql.append(getLimit(curPage,pageSize));
+
+        logger.info(sql);
+        return sql.toString();
+    }
+
+    /**
+     * 批量删除
+     * @param entity 实体类，无具体意义
+     * @param idList 实体类的主键列表
+     * @return 返回相应的 sql 语句
+     */
+    @Override
+    public String batchDelete(T entity , List<Integer> idList){
+        StringBuilder sql = new StringBuilder();
+        String tableName = entity._tableName();
+        String pkName = entity._primaryKey();
+
+        sql.append(getDelete(tableName));
+        sql.append(getWhereIn(pkName, idList));
 
         logger.info(sql);
         return sql.toString();
@@ -197,6 +218,22 @@ public class MySqlParser<T extends POJO> implements SqlParser<T> {
         Integer index = 1;
         for(String key : keySet){
             pstmt.setObject(index++,attrValueMap.get(key));
+        }
+        return pstmt;
+    }
+
+    /**
+     * 向 pstmt 中填充参数，使用 preparedStatement 防止 sql 注入，支持用户自定义参数值，使查询更加灵活
+     * @param paramsValue 与 pstmt 中得参数的值相同的值顺序
+     * @param pstmt pstmt对象
+     * @return
+     * @throws SQLException
+     */
+    private PreparedStatement setParameter(List<Object> paramsValue , PreparedStatement pstmt) throws SQLException {
+        Integer index = 1;
+        if(null == paramsValue ) throw new SQLException("paramsValue is null,fail to set sql parameter!!!");
+        for(Object value : paramsValue) {
+            pstmt.setObject(index++,value);
         }
         return pstmt;
     }
@@ -370,6 +407,21 @@ public class MySqlParser<T extends POJO> implements SqlParser<T> {
         }else{
             return new StringBuilder("");
         }
+    }
+
+    /**
+     * 根据条件生成 in 语句 , 无需进行数值的填充 setParameter 操作
+     * @param pkName 主键名称
+     * @param idList 主键列表
+     * @return
+     */
+    private StringBuilder getWhereIn(String pkName , List<Integer> idList){
+        StringBuilder batchDelete = new StringBuilder("WHERE " + pkName + " IN (");
+
+        batchDelete.append(StringUtil.join(idList,","));
+        batchDelete.append(") ");
+        return batchDelete;
+
     }
 
     /**

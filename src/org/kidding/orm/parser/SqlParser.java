@@ -25,4 +25,6 @@ public interface SqlParser<T extends POJO> {
 
     public PreparedStatement setParameter(T entity,Boolean isForce,PreparedStatement pstmt) throws SQLException;
     //一些多表查询的一些支持方法，还未想到好的解决方案，暂时留空
+
+    public String batchDelete(T entity , List<Integer> idList);
 }

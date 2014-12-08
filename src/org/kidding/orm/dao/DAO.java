@@ -64,20 +64,21 @@ public interface DAO<T extends POJO> {
 
     /**
      * 删除，删除表中的所有列表
-     * @return
+     * @return 返回删除成功的数量
      */
     public Integer deleteAll();
 
     /**
      * 批量删除，
-     * @param entity
-     * @return
+     * @param idList 需要删除的数据的主键列表
+     * @return 返回删除成功的数量
      */
-    public Integer batchDelete(List<T> entity);
+    public Integer batchDelete(List<Integer> idList);
 
     /**
      * 查询，实体类中不为 null 的值作为查询条件，并且只返回一个条目
-     * @param entity
+     * @param entity 实体类
+     * @param params 需要返回的列，请尽量填充，避免不必要的数据传输
      * @return
      */
     public T get(T entity,String... params);
@@ -109,5 +110,5 @@ public interface DAO<T extends POJO> {
      * 查询，查询该表中的所有数据
      * @return
      */
-    public List<T> listAll(String... params);
+    public List<T> listAll();
 }

@@ -30,12 +30,14 @@ public class BaseDAOTest {
         SqlParser<POJOTest> sqlParser = new MySqlParser<POJOTest>(entityParser);
         BaseDAO<POJOTest> dao = new BaseDAO<POJOTest>(sqlParser,"mysql",POJOTest.class);
 //        Long id = dao.list(entity);
-        List<POJOTest> list = dao.list(entity,0,2,null,"createTime desc",null);
+//        List<POJOTest> list = dao.list(entity,0,2,null,"createTime desc",null);
+//
+//        System.out.println("size = " + list.size());
+//        for(POJOTest pojo : list){
+//            System.out.println("pojo.name = " + pojo.getName() + " createTime = " + pojo.getCreateTime());
+//        }
 
-        System.out.println("size = " + list.size());
-        for(POJOTest pojo : list){
-            System.out.println("pojo.name = " + pojo.getName() + " createTime = " + pojo.getCreateTime());
-        }
+        //test delete all data
 
     }
 }

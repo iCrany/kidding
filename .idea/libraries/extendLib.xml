@@ -1,0 +1,12 @@
+<component name="libraryTable">
+  <library name="extendLib">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/../ExtendLoveJ/Extend_loveJ（test）/WebContent/WEB-INF/lib/slf4j-log4j12-1.6.4.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../ExtendLoveJ/Extend_loveJ（test）/WebContent/WEB-INF/lib/slf4j-api-1.6.4.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../ExtendLoveJ/Extend_loveJ（test）/WebContent/WEB-INF/lib/log4j-1.2.16.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../ExtendLoveJ/Extend_loveJ（test）/WebContent/WEB-INF/lib/mysql-connector-java-5.1.20-bin.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
