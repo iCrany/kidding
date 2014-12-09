@@ -140,6 +140,30 @@ public class MySqlParser<T extends POJO> implements SqlParser<T> {
     }
 
     /**
+     * 批量插入，这里只需要生成一个 插入 sql 语句的模板即可，剩下的数据由 pstmt 的 addBatch() 方法来处理
+     * @param entity 实体类，并没有实际的意义，只是用来获取数据库表明
+     * @param isForce null 值是否需要插入
+     * @return 根据条件生成的批量插入sql语句，否则返回 null
+     */
+    @Override
+    public String batchSave(T entity , Boolean isForce ){
+        StringBuilder sql = new StringBuilder();
+        String tableName = null;
+
+        try{
+            tableName = entity._tableName();
+            sql.append(getInsert(entity,isForce));
+
+        }catch(Exception e){
+            logger.error("fail to create batch save sql template!!!",e);
+            return null;
+        }
+
+        logger.info(sql);
+        return sql.toString();
+    }
+
+    /**
      * 更新
      * @param entity
      * @param isForce
@@ -193,12 +217,12 @@ public class MySqlParser<T extends POJO> implements SqlParser<T> {
         String tableName = entity._tableName();
 
         if(null == attrValueMap){
-            attrValueMap = entityParser.getAttrValueNoPkMap(entity,isForce);
+            attrValueMap = entityParser.getAttrValueNoPkMap(entity, isForce);
         }
 
         sql.append(getSelect(params));
         sql.append(getFrom(tableName));
-        sql.append(getWhere(attrValueMap,condition));
+        sql.append(getWhere(attrValueMap, condition));
         sql.append(getGroupBy(groupBy));
         sql.append(getOrderBy(orderBy));
         sql.append(getLimit(curPage,pageSize));
@@ -210,12 +234,13 @@ public class MySqlParser<T extends POJO> implements SqlParser<T> {
     /**
      * 向 pstmt 中填充参数，使用 preparedStatement 防止 sql 注入
      * @param entity 实体对象
-     * @param isForce
+     * @param isForce null 值是否需要更新
      * @param pstmt pstmt对象
      * @return
      */
-    public PreparedStatement setParameter(T entity,Boolean isForce,PreparedStatement pstmt) throws SQLException {
+    public PreparedStatement setParameter(T entity,Boolean isForce ,PreparedStatement pstmt) throws SQLException, InvocationTargetException, IllegalAccessException {
         Integer index = 1;
+        attrValueMap = entityParser.getAttrValueMap(entity, isForce);//需要每次都进行更新数据，该方法会被批量处理代码调用
         for(String key : keySet){
             pstmt.setObject(index++,attrValueMap.get(key));
         }
@@ -229,12 +254,28 @@ public class MySqlParser<T extends POJO> implements SqlParser<T> {
      * @return
      * @throws SQLException
      */
-    private PreparedStatement setParameter(List<Object> paramsValue , PreparedStatement pstmt) throws SQLException {
+    public PreparedStatement setParameter(List<Object> paramsValue , PreparedStatement pstmt) throws SQLException {
         Integer index = 1;
         if(null == paramsValue ) throw new SQLException("paramsValue is null,fail to set sql parameter!!!");
         for(Object value : paramsValue) {
             pstmt.setObject(index++,value);
         }
+        return pstmt;
+    }
+
+    /**
+     * 批量插入数据
+     * @param entityList
+     * @param isForce null 是否需要
+     * @param pstmt
+     * @return
+     */
+    public PreparedStatement setBatchSaveParameter(List<T> entityList , Boolean isForce , PreparedStatement pstmt) throws IllegalAccessException, SQLException, InvocationTargetException {
+
+        for(T entity : entityList){
+            pstmt = setParameter(entity,isForce,pstmt);
+        }
+
         return pstmt;
     }
 
@@ -450,5 +491,37 @@ public class MySqlParser<T extends POJO> implements SqlParser<T> {
 
         return insert;
     }
+
+//    /**
+//     * 根据条件生成 batch insert 语句
+//     * @param entityList
+//     * @param isForce
+//     * @param tableName
+//     * @return
+//     */
+//    private StringBuilder getBatchInsert(List<T> entityList , Boolean isForce,String tableName) throws InvocationTargetException, IllegalAccessException {
+//        StringBuilder batchInsert = new StringBuilder("INSERT INTO " + tableName + "(");
+//        if(null == entityList || entityList.size() == 0) throw new NullPointerException("the batch save given list is null or size is zero!!!");
+//
+//        T example = entityList.get(0);
+//        Map<String,Object> map = entityParser.getAttrValueNoPkMap(example, isForce);
+//        StringBuilder params = new StringBuilder();
+//        Set<String> keySet = map.keySet();
+//
+//        for(String key : keySet){
+//            batchInsert.append("" + key + ", ");
+//        }
+//        batchInsert.setCharAt(batchInsert.lastIndexOf(","),')');
+//        batchInsert.append(" VALUES ");
+//
+//        for(T entity : entityList){
+//            map = entityParser.getAttrValueNoPkMap(entity,isForce);
+//
+//        }
+//
+//
+//
+//        return batchInsert;
+//    }
 
 }

@@ -1,4 +1,4 @@
-package org.kidding.orm.entity;
+package org.kidding.orm.system;
 
 /**
  * Created by iCrany on 14/11/26.
@@ -20,6 +20,6 @@ public class Contants {
 
     public static String maxConn = "maxConn";//连接池中的最大连接数
 
-    public static String minConn = "minConn";//连接池中俄最小连接数
+    public static String minConn = "minConn";//连接池中的最小连接数
 
 }

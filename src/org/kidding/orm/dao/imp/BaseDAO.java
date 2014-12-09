@@ -131,35 +131,34 @@ public class BaseDAO<T extends POJO> implements DAO<T>{
 
     /**
      * 批量更新，这里进行批量的更新操作
-     * @param entityList
-     * @param isForce
-     * @return
+     * @param entityList 实体类列表
+     * @param isForce null 值是否需要更新
+     * @return 返回是否成功更新
      */
     public Boolean _batchUpdate(List<T> entityList,Boolean isForce) throws SQLException, InvocationTargetException, IllegalAccessException {
         Connection conn = null;
         PreparedStatement pstmt = null;
-        Boolean result = false;
-        String sql = null;
+        String sqlTemplate = null;
+        int[] affectedNum = null;
         try {
             conn = DBManager.getConnection(dbAlias);
-            conn.setAutoCommit(false);//设置事务回滚
 
-            if(null != entityList && entityList.size()>0){
-                sql = sqlParser.update(entityList.get(0),isForce,null,null,null,null,null);
-                pstmt = conn.prepareStatement(sql);//这里返回更新 sql 语句模板
-                logger.debug("batch update module : " + sql);
-                for(T entity : entityList){
-                    
-                }
-            }else{
+            sqlTemplate = sqlParser.update(entityList.get(0), isForce, null, null, null, null, null);
+            pstmt = conn.prepareStatement(sqlTemplate);//这里返回更新 sql 语句模板
+            pstmt = sqlParser.setBatchSaveParameter(entityList,isForce,pstmt);
 
-            }
+            conn.setAutoCommit(false);
+            affectedNum = pstmt.executeBatch();
             conn.commit();//设置事物的提交
         }finally {
             DBManager.close(pstmt);
             DBManager.close(conn);
         }
-        return result;
+
+        for(Integer index = 0 ; index < entityList.size() ; index++){
+            if(affectedNum[index] == PreparedStatement.EXECUTE_FAILED) return false;
+        }
+        return true;
     }
 
     @Override
@@ -183,8 +182,38 @@ public class BaseDAO<T extends POJO> implements DAO<T>{
     }
 
     @Override
-    public Integer batchSave(List<T> entityList) {
-        return 0;
+    public Integer batchSave(List<T> entityList , Boolean isForce) {
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        String sqlTemplate = null;
+        int[] affectedNum = null;
+
+        try{
+            conn = DBManager.getConnection(dbAlias);
+            sqlTemplate = sqlParser.batchSave(entityList.get(0), isForce);
+            pstmt = conn.prepareStatement(sqlTemplate);
+            pstmt = sqlParser.setBatchSaveParameter(entityList,isForce,pstmt);
+
+            conn.setAutoCommit(false);
+            affectedNum = pstmt.executeBatch();
+            conn.commit();
+
+        }catch(Exception e){
+            try {
+                conn.rollback();
+            } catch (SQLException e1) {
+                logger.error("batch save statement fail to rollback!!!",e1);
+            }
+            logger.error("fail to batch save!!!",e);
+        }finally {
+            DBManager.close(pstmt);
+            DBManager.close(conn);
+        }
+
+        for(Integer index = 0 ; index < entityList.size() ; index++){
+            if(affectedNum[index] == PreparedStatement.EXECUTE_FAILED) return null;
+        }
+        return 1;
     }
 
     /**
@@ -193,7 +222,7 @@ public class BaseDAO<T extends POJO> implements DAO<T>{
      * @param isForce null 值是否需要
      * @return 成功返回成功插入的id,失败返回 null 值
      */
-    public Long _save(T entity , Boolean isForce) throws SQLException {
+    public Long _save(T entity , Boolean isForce) throws SQLException, InvocationTargetException, IllegalAccessException {
         Connection conn = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;
@@ -219,26 +248,6 @@ public class BaseDAO<T extends POJO> implements DAO<T>{
         }
 
         return id;
-    }
-
-    /**
-     * 批量保存
-     * @param entityList 实体类列表
-     * @param isForce null 值是否需要
-     * @return 返回受影响的条目数
-     */
-    public Integer _batchSave(List<T> entityList , Boolean isForce){
-        Connection conn = null;
-        PreparedStatement pstmt = null;
-
-        try{
-
-        }finally {
-            DBManager.close(pstmt);
-            DBManager.close(conn);
-        }
-
-        return 0;
     }
 
     @Override
@@ -305,10 +314,10 @@ public class BaseDAO<T extends POJO> implements DAO<T>{
      * 根据条件来进行删除操作
      * @param entity 实体类
      * @param isForce null 值是否需要
-     * @return
+     * @return 返回受影响的条目数
      * @throws SQLException
      */
-    public Integer _delete(T entity , Boolean isForce) throws SQLException {
+    public Integer _delete(T entity , Boolean isForce) throws SQLException, InvocationTargetException, IllegalAccessException {
         Connection conn = null;
         PreparedStatement pstmt = null;
         Integer affectedNum = 0;
@@ -330,9 +339,6 @@ public class BaseDAO<T extends POJO> implements DAO<T>{
 
         return affectedNum;
     }
-
-
-
 
     @Override
     public T get(T entity,String... params) {
@@ -404,13 +410,13 @@ public class BaseDAO<T extends POJO> implements DAO<T>{
     /**
      * 根据条件查找符合条件的条目数
      * @param entity 实体类
-     * @param curPage
-     * @param pageSize
-     * @param condition
-     * @param orderBy
-     * @param groupBy
-     * @param params
-     * @return
+     * @param curPage 当前是第几页
+     * @param pageSize 每一页显示的条目数
+     * @param condition 一些 entity 中无法表示的条件，例如 field < 11
+     * @param orderBy 排序条件
+     * @param groupBy 分组条件
+     * @param params 需要返回的字段，尽量填写，避免不必要的数据传输
+     * @return 返回条件查询的实体类列表
      */
     public List<T> _list(T entity, Integer curPage, Integer pageSize, String condition, String orderBy, String groupBy,String... params) throws SQLException, InvocationTargetException, IllegalAccessException, InstantiationException {
         Connection conn = null;

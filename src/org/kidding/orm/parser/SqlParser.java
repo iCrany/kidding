@@ -9,7 +9,7 @@ import java.util.List;
 
 /**
  * Created by iCrany on 14/11/28.
- * 根据 entity , condition , curPage , pageSize , orderBy , groupBy 等条件生产 sql 语句
+ * 根据 entity , condition , curPage , pageSize , orderBy , groupBy 等条件生产 sql 语句 以及处理 pstmt
  */
 public interface SqlParser<T extends POJO> {
 
@@ -23,8 +23,12 @@ public interface SqlParser<T extends POJO> {
 
     public String list(T entity, Boolean isForce,String condition,Integer curPage,Integer pageSize,String orderBy,String groupBy,String... params) throws InvocationTargetException, IllegalAccessException;
 
-    public PreparedStatement setParameter(T entity,Boolean isForce,PreparedStatement pstmt) throws SQLException;
+    public PreparedStatement setParameter(T entity,Boolean isForce,PreparedStatement pstmt) throws SQLException, InvocationTargetException, IllegalAccessException;
+
+    public PreparedStatement setBatchSaveParameter(List<T> entityList , Boolean isForce , PreparedStatement pstmt) throws IllegalAccessException, SQLException, InvocationTargetException;
     //一些多表查询的一些支持方法，还未想到好的解决方案，暂时留空
 
     public String batchDelete(T entity , List<Integer> idList);
+
+    public String batchSave(T entity , Boolean isForce );
 }
