@@ -306,8 +306,7 @@ public class MySqlParser<T extends POJO> implements SqlParser<T> {
      */
     private StringBuilder getWhere(Map<String,Object> attrMap,String condition){
         StringBuilder where = new StringBuilder("WHERE ");
-        if(null == keySet)
-            keySet = attrMap.keySet();
+        keySet = attrMap.keySet();
 
         for(String key : keySet){
             where.append(key + "= ? AND ");
