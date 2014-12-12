@@ -217,9 +217,7 @@ public class MySqlParser<T extends POJO> implements SqlParser<T> {
         StringBuilder sql = new StringBuilder();
         String tableName = entity._tableName();
 
-        if(null == attrValueMap){
-            attrValueMap = entityParser.getAttrValueNoPkMap(entity, isForce);
-        }
+        attrValueMap = entityParser.getAttrValueNoPkMap(entity, isForce);
 
         sql.append(getSelect(params));
         sql.append(getFrom(tableName));
@@ -229,6 +227,31 @@ public class MySqlParser<T extends POJO> implements SqlParser<T> {
         sql.append(getLimit(curPage,pageSize));
 
         logger.info(sql.toString());
+        return sql.toString();
+    }
+
+    /**
+     * 这里是根据 vo 类的主键来获取单个数据项的
+     * @param entity 实体对象
+     * @param params 需要返回的列，尽量填写，避免不必要的传输
+     * @return 返回单个数据项，没有返回 null
+     */
+    @Override
+    public String get(T entity, String... params) throws InvocationTargetException, IllegalAccessException {
+        StringBuilder sql = new StringBuilder();
+        String tableName = entity._tableName();
+        String pk = entity._primaryKey();
+
+        attrValueMap = entityParser.getAttrValueMap(entity,false);
+
+        if( null == attrValueMap.get(pk)){
+            throw new NullPointerException("primary key is null!!!");
+        }
+
+        sql.append(getSelect(params));
+        sql.append(getFrom(tableName));
+        sql.append(getWhere(attrValueMap,null));
+
         return sql.toString();
     }
 
