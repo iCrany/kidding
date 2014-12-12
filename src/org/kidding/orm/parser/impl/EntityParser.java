@@ -207,7 +207,7 @@ public class EntityParser<T extends POJO> {
      * @return 是否成功
      */
     public Object setMethodValue(T entity,String key , Object value) throws InvocationTargetException, IllegalAccessException {
-        String setMethodName = null;
+        String setMethodName;
 
         if(value instanceof Boolean){
             setMethodName = "is" +  key.substring(0,1).toUpperCase() + key.substring(1);
@@ -222,6 +222,24 @@ public class EntityParser<T extends POJO> {
 
         Method method = methodMap.get(setMethodName);
         Object obj = method.invoke(entity,value);
+        return obj;
+    }
+
+    /**
+     * 获取实体类中的 某个属性值
+     * @param entity 实体类
+     * @param key 属性名
+     * @return 返回该属性的值
+     * @throws InvocationTargetException
+     * @throws IllegalAccessException
+     */
+    public Object getMethodValue(T entity , String key) throws InvocationTargetException, IllegalAccessException {
+        String getMethodName;
+
+        getMethodName = "get" + key.substring(0,1).toUpperCase() + key.substring(1);
+
+        Method method = methodMap.get(getMethodName);
+        Object obj = method.invoke(entity);
         return obj;
     }
 

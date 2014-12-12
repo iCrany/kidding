@@ -52,8 +52,7 @@ public class MySqlParser<T extends POJO> implements SqlParser<T> {
         StringBuffer sql = new StringBuffer();
         String tableName = entity._tableName();
 
-        if(null == attrValueMap)
-            attrValueMap = entityParser.getAttrValueMap(entity, isForce);
+        attrValueMap = entityParser.getAttrValueMap(entity, isForce);
 
         sql.append(getSelect(params));
         sql.append(getFrom(tableName));
@@ -79,9 +78,11 @@ public class MySqlParser<T extends POJO> implements SqlParser<T> {
      * @return
      */
     @Override
-    public String delete(T entity, Boolean isForce, String condition, Integer curPage, Integer pageSize, String orderBy, String groupBy,String... params) {
+    public String delete(T entity, Boolean isForce, String condition, Integer curPage, Integer pageSize, String orderBy, String groupBy,String... params) throws InvocationTargetException, IllegalAccessException {
         StringBuilder sql = new StringBuilder();
         String tableName = entity._tableName();
+
+        attrValueMap = entityParser.getAttrValueMap(entity, isForce);
 
         sql.append(getDelete(tableName));
         sql.append(getWhere(attrValueMap,condition));
@@ -183,9 +184,7 @@ public class MySqlParser<T extends POJO> implements SqlParser<T> {
         StringBuilder sql = new StringBuilder();
         String tableName = entity._tableName();
 
-        if(null == attrValueMap){
-            attrValueMap = entityParser.getAttrValueMap(entity, isForce);
-        }
+        attrValueMap = entityParser.getAttrValueNoPkMap(entity, isForce);
 
         sql.append(getUpdate(tableName));
         sql.append(getSet(entity,isForce));
@@ -260,12 +259,19 @@ public class MySqlParser<T extends POJO> implements SqlParser<T> {
      * @param entity 实体对象
      * @param isForce null 值是否需要更新
      * @param pstmt pstmt对象
+     * @param isPk 主键是否需要作为条件
      * @return
      */
-    public PreparedStatement setParameter(T entity,Boolean isForce ,PreparedStatement pstmt) throws SQLException, InvocationTargetException, IllegalAccessException {
+    public PreparedStatement setParameter(T entity,Boolean isForce ,PreparedStatement pstmt , Boolean isPk) throws SQLException, InvocationTargetException, IllegalAccessException {
         Integer index = 1;
         attrValueMap = entityParser.getAttrValueMap(entity, isForce);//需要每次都进行更新数据，该方法会被批量处理代码调用
         keySet = attrValueMap.keySet();
+
+        if(false == isPk){
+            String pk = entity._primaryKey();
+            if(keySet.contains(pk)) keySet.remove(pk);
+        }
+
         for(String key : keySet){
             pstmt.setObject(index++,attrValueMap.get(key));
         }
@@ -298,7 +304,7 @@ public class MySqlParser<T extends POJO> implements SqlParser<T> {
     public PreparedStatement setBatchSaveParameter(List<T> entityList , Boolean isForce , PreparedStatement pstmt) throws IllegalAccessException, SQLException, InvocationTargetException {
 
         for(T entity : entityList){
-            pstmt = setParameter(entity,isForce,pstmt);
+            pstmt = setParameter(entity,isForce,pstmt,false);
         }
 
         return pstmt;
@@ -359,8 +365,17 @@ public class MySqlParser<T extends POJO> implements SqlParser<T> {
     private StringBuilder getWhereByPk(T entity , String condition){
         StringBuilder where = new StringBuilder("WHERE ");
         String pk = entity._primaryKey();
-
-        where.append( pk + " = " + attrValueMap.get(pk));
+        Object pkValueObj;
+        Integer pkValue = 0;
+        try {
+            pkValueObj =entityParser.getMethodValue(entity, pk);
+            if(null != pkValueObj){
+                pkValue = (Integer)pkValueObj;
+            }
+        }catch(Exception e){
+            logger.error("the primaryKey type is not Integer or this vo has not this get method : " + pk,e);
+        }
+        where.append( pk + " = " + pkValue);
 
         if(null != condition && !condition.isEmpty()){
             where.append(" " + condition);
@@ -456,8 +471,7 @@ public class MySqlParser<T extends POJO> implements SqlParser<T> {
      */
     private StringBuilder getSet(T entity, Boolean isForce){
         StringBuilder set = new StringBuilder(" SET ");
-        if(null == keySet)
-            keySet = attrValueMap.keySet();
+        keySet = attrValueMap.keySet();
 
         for(String key : keySet){
             set.append(key + " = ? , ");

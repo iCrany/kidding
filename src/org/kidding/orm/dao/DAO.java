@@ -38,14 +38,14 @@ public interface DAO<T extends POJO> {
      * @param entity 实体类
      * @return 返回受影响的条目数
      */
-    public Long save(T entity);
+    public Integer save(T entity);
 
     /**
      * 保存，实体类中的所有值都进行保存，包括为 null 的字段
      * @param entity 实体类
      * @return 返回受影响的条目数
      */
-    public Long forceSave(T entity);
+    public Integer forceSave(T entity);
 
     /**
      * 批量保存，

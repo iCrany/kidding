@@ -17,13 +17,15 @@ public interface SqlParser<T extends POJO> {
 
     public String save(T entity, Boolean isForce,String condition,Integer curPage,Integer pageSize,String orderBy,String groupBy,String... params);
 
-    public String delete(T entity, Boolean isForce,String condition,Integer curPage,Integer pageSize,String orderBy,String groupBy,String... params);
+    public String delete(T entity, Boolean isForce,String condition,Integer curPage,Integer pageSize,String orderBy,String groupBy,String... params) throws InvocationTargetException, IllegalAccessException;
 
     public String update(T entity, Boolean isForce,String condition,Integer curPage,Integer pageSize,String orderBy,String groupBy,String... params) throws InvocationTargetException, IllegalAccessException;
 
     public String list(T entity, Boolean isForce,String condition,Integer curPage,Integer pageSize,String orderBy,String groupBy,String... params) throws InvocationTargetException, IllegalAccessException;
 
-    public PreparedStatement setParameter(T entity,Boolean isForce,PreparedStatement pstmt) throws SQLException, InvocationTargetException, IllegalAccessException;
+    public String get(T entity, String... params) throws InvocationTargetException, IllegalAccessException;
+
+    public PreparedStatement setParameter(T entity,Boolean isForce,PreparedStatement pstmt,Boolean isPk) throws SQLException, InvocationTargetException, IllegalAccessException;
 
     public PreparedStatement setBatchSaveParameter(List<T> entityList , Boolean isForce , PreparedStatement pstmt) throws IllegalAccessException, SQLException, InvocationTargetException;
     //一些多表查询的一些支持方法，还未想到好的解决方案，暂时留空

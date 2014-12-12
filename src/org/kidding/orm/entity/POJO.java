@@ -1,8 +1,5 @@
 package org.kidding.orm.entity;
 
-import com.sun.tools.javac.util.Name;
-import com.sun.xml.internal.bind.v2.model.core.ID;
-
 import javax.persistence.Id;
 import javax.persistence.Table;
 import java.io.Serializable;

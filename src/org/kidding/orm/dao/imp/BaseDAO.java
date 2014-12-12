@@ -49,7 +49,7 @@ public class BaseDAO<T extends POJO> implements DAO<T>{
      */
     private ResultSetParser resultSetParser;
 
-    private BaseDAO(String dbAlias,Class<T> classType) throws InstantiationException, IllegalAccessException {
+    public BaseDAO(String dbAlias,Class<T> classType) throws InstantiationException, IllegalAccessException {
         this.classType = classType;
         this.dbAlias = dbAlias;
         this.sqlParser = new MySqlParser(new EntityParser(classType));
@@ -119,7 +119,7 @@ public class BaseDAO<T extends POJO> implements DAO<T>{
             sqlTemplate = sqlParser.update(entity, isForce, null, null, null, null, null);
 
             pstmt = conn.prepareStatement(sqlTemplate);
-            pstmt = sqlParser.setParameter(entity,isForce,pstmt);
+            pstmt = sqlParser.setParameter(entity,isForce,pstmt,false);
             logger.debug(pstmt.toString());
             affectedNum = pstmt.executeUpdate();
         }finally {
@@ -162,23 +162,23 @@ public class BaseDAO<T extends POJO> implements DAO<T>{
     }
 
     @Override
-    public Long save(T entity) {
+    public Integer save(T entity) {
         try{
             return _save(entity,false);
         }catch(Exception e) {
             logger.error("fail to save!!!",e);
         }
-        return 0L;
+        return 0;
     }
 
     @Override
-    public Long forceSave(T entity) {
+    public Integer forceSave(T entity) {
         try{
             return _save(entity,true);
         }catch (Exception e){
             logger.error("fail to force save!!!",e);
         }
-        return 0L;
+        return 0;
     }
 
     @Override
@@ -222,24 +222,25 @@ public class BaseDAO<T extends POJO> implements DAO<T>{
      * @param isForce null 值是否需要
      * @return 成功返回成功插入的id,失败返回 null 值
      */
-    public Long _save(T entity , Boolean isForce) throws SQLException, InvocationTargetException, IllegalAccessException {
+    public Integer _save(T entity , Boolean isForce) throws SQLException, InvocationTargetException, IllegalAccessException {
         Connection conn = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;
         String sqlTemplate = null;
-        Long id = null;
+        Integer id = null;
 
         try{
             conn = DBManager.getConnection(dbAlias);
             sqlTemplate = sqlParser.save(entity,isForce,null,null,null,null,null);
 
             pstmt = conn.prepareStatement(sqlTemplate,PreparedStatement.RETURN_GENERATED_KEYS);
-            pstmt = sqlParser.setParameter(entity,isForce,pstmt);
+            pstmt = sqlParser.setParameter(entity,isForce,pstmt,false);
 
             pstmt.executeUpdate();
+
             rs = pstmt.getGeneratedKeys();
             if(rs.next()){
-                id = rs.getLong(1);
+                id = rs.getInt(1);
             }
 
         }finally {
@@ -328,7 +329,7 @@ public class BaseDAO<T extends POJO> implements DAO<T>{
             sqlTemplate = sqlParser.delete(entity,isForce,null,null,null,null,null);
 
             pstmt = conn.prepareStatement(sqlTemplate);
-            pstmt = sqlParser.setParameter(entity,isForce,pstmt);
+            pstmt = sqlParser.setParameter(entity,isForce,pstmt,true);
 
             affectedNum = pstmt.executeUpdate();
 
@@ -350,12 +351,13 @@ public class BaseDAO<T extends POJO> implements DAO<T>{
 
         try{
             conn = DBManager.getConnection(dbAlias);
-            sqlTemplate = sqlParser.list(entity,false,null,null,null,null,null,params);
+            sqlTemplate = sqlParser.get(entity,params);
             pstmt = conn.prepareStatement(sqlTemplate);
+            pstmt = sqlParser.setParameter(entity,false,pstmt,true);
 
             rs = pstmt.executeQuery();
 
-            result = (T) resultSetParser.parse(classType,rs);
+            result = (T) resultSetParser.parse(classType,rs,params);
 
         }catch(Exception e){
             logger.error("fail to get entity data!!!",e);
@@ -430,11 +432,10 @@ public class BaseDAO<T extends POJO> implements DAO<T>{
             sqlTemplate = sqlParser.list(entity,false,condition,curPage,pageSize,orderBy,groupBy,params);
 
             pstmt = conn.prepareStatement(sqlTemplate);
-            pstmt = sqlParser.setParameter(entity,false,pstmt);
-            logger.info(pstmt.toString());
+            pstmt = sqlParser.setParameter(entity,false,pstmt,false);
             rs = pstmt.executeQuery();
 
-            result = resultSetParser.parseList(entity.getClass(), rs);
+            result = resultSetParser.parseList(entity.getClass(), rs,params);
 
         }finally {
             DBManager.close(rs);

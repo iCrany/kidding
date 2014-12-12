@@ -4,17 +4,13 @@ package org.kidding.orm.db;
 import com.alibaba.druid.pool.DruidDataSourceFactory;
 import org.apache.log4j.Logger;
 import org.kidding.orm.exception.DataSourceInitException;
-import org.kidding.orm.util.EmptyUtil;
 
 import javax.sql.DataSource;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.sql.*;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 
@@ -42,16 +38,20 @@ public class DBManager {
         }
 
         try{
+            logger.info("DBManager classPath : " + DBManager.class.getClassLoader().getResource("/"));
             InputStream in = DBManager.class.getResourceAsStream("/"+configName);
             Properties pro = new Properties();
             pro.load(in);
             injectDataSource(alias, DruidDataSourceFactory.createDataSource(pro));
         }catch(IOException e){
-            logger.error("fail to load the config file!",e);
+            logger.error("fail to load the config file!!!",e);
+            return false;
         }catch(Exception e){
-            logger.error("fail to init druidDataSource!",e);
+            logger.error("fail to init druidDataSource!!!",e);
+            return false;
         }
 
+        logger.info("success to init druidDataSource!");
         return true;
     }
 
@@ -75,9 +75,14 @@ public class DBManager {
      * @throws SQLException
      */
     public static Connection getConnection(String alias) throws SQLException{
+
+        if(null == dataSourceMap){
+            throw new NullPointerException("dataSource init error , dataSourceMap is null!!!");
+        }
+
         DataSource dataSource = dataSourceMap.get(alias);
         if(null == dataSource){
-            throw new DataSourceInitException("fail init this dataSource : " + alias);
+            throw new DataSourceInitException("fail to init this dataSource : " + alias);
         }
         return dataSource.getConnection();
     }
@@ -98,7 +103,7 @@ public class DBManager {
                 pstmt.close();
             }
         }catch(SQLException e){
-            logger.error("fail to close this preparedStatment!",e);
+            logger.error("fail to close this preparedStatement!",e);
         }
     }
 
