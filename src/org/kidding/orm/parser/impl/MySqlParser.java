@@ -3,6 +3,7 @@ package org.kidding.orm.parser.impl;
 import org.apache.log4j.Logger;
 import org.kidding.orm.entity.POJO;
 import org.kidding.orm.parser.SqlParser;
+import org.kidding.orm.util.PrintUtil;
 import org.kidding.orm.util.StringUtil;
 
 import java.lang.reflect.InvocationTargetException;
@@ -241,6 +242,7 @@ public class MySqlParser<T extends POJO> implements SqlParser<T> {
     public PreparedStatement setParameter(T entity,Boolean isForce ,PreparedStatement pstmt) throws SQLException, InvocationTargetException, IllegalAccessException {
         Integer index = 1;
         attrValueMap = entityParser.getAttrValueMap(entity, isForce);//需要每次都进行更新数据，该方法会被批量处理代码调用
+        keySet = attrValueMap.keySet();
         for(String key : keySet){
             pstmt.setObject(index++,attrValueMap.get(key));
         }
@@ -305,6 +307,9 @@ public class MySqlParser<T extends POJO> implements SqlParser<T> {
      * @return
      */
     private StringBuilder getWhere(Map<String,Object> attrMap,String condition){
+        if(null == attrMap || attrMap.size() == 0){
+            return new StringBuilder("");
+        }
         StringBuilder where = new StringBuilder("WHERE ");
         keySet = attrMap.keySet();
 
@@ -315,7 +320,9 @@ public class MySqlParser<T extends POJO> implements SqlParser<T> {
         if(null != condition && !condition.isEmpty()){
             where.append(" " + condition);
         }else {
-            where.replace(where.lastIndexOf("AND "), where.length() - 1, "");
+            if(where.lastIndexOf("AND ") >= 0) {
+                where.replace(where.lastIndexOf("AND "), where.length() - 1, "");
+            }
         }
         return where;
     }
