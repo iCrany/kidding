@@ -254,6 +254,16 @@ public class MySqlParser<T extends POJO> implements SqlParser<T> {
         return sql.toString();
     }
 
+    @Override
+    public String get(Integer id , String tableName , String pk , String... params){
+        StringBuilder sql = new StringBuilder();
+        sql.append(getSelect(params));
+        sql.append(getFrom(tableName));
+        sql.append(" WHERE " + pk + " = " + id);
+
+        return sql.toString();
+    }
+
     /**
      * 向 pstmt 中填充参数，使用 preparedStatement 防止 sql 注入
      * @param entity 实体对象

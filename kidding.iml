@@ -7,7 +7,7 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" name="javax.persistence" level="project" />
-    <orderEntry type="library" name="extendLib" level="project" />
+    <orderEntry type="library" exported="" name="user-lib" level="project" />
+    <orderEntry type="library" exported="" name="kidding-lib" level="project" />
   </component>
 </module>

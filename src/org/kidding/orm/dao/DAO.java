@@ -85,6 +85,14 @@ public interface DAO<T extends POJO> {
     public T get(T entity,String... params);
 
     /**
+     * 查询，根据主键为条件进行查询
+     * @param id 主键
+     * @param params 需要返回的列，请尽量填充，避免不必要的数据传输
+     * @return 返回条件查询的实体类
+     */
+    public T get(Integer id,String... params);
+
+    /**
      * 查询，实体类红不为 null 的值作为查询条件，并且返回一些列的条目
      * @param entity 实体类 不为 null 的字段作为查询条件
      * @param condition 一些 entity 中无法表示的条件，例如 field < 11

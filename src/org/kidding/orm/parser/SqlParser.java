@@ -25,6 +25,8 @@ public interface SqlParser<T extends POJO> {
 
     public String get(T entity, String... params) throws InvocationTargetException, IllegalAccessException;
 
+    public String get(Integer id , String tableName , String pk , String... params);
+
     public PreparedStatement setParameter(T entity,Boolean isForce,PreparedStatement pstmt,Boolean isPk) throws SQLException, InvocationTargetException, IllegalAccessException;
 
     public PreparedStatement setBatchSaveParameter(List<T> entityList , Boolean isForce , PreparedStatement pstmt) throws IllegalAccessException, SQLException, InvocationTargetException;

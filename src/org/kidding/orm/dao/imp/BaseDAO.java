@@ -111,7 +111,7 @@ public class BaseDAO<T extends POJO> implements DAO<T>{
         Integer affectedNum = 0;
         Connection conn = null;
         PreparedStatement pstmt = null;
-        String sqlTemplate = null;
+        String sqlTemplate;
         try {
             conn = DBManager.getConnection(dbAlias);
 
@@ -135,10 +135,10 @@ public class BaseDAO<T extends POJO> implements DAO<T>{
      * @param isForce null 值是否需要更新
      * @return 返回是否成功更新
      */
-    public Boolean _batchUpdate(List<T> entityList,Boolean isForce) throws SQLException, InvocationTargetException, IllegalAccessException {
+    public Integer _batchUpdate(List<T> entityList,Boolean isForce) throws SQLException, InvocationTargetException, IllegalAccessException {
         Connection conn = null;
         PreparedStatement pstmt = null;
-        String sqlTemplate = null;
+        String sqlTemplate;
         int[] affectedNum = null;
         try {
             conn = DBManager.getConnection(dbAlias);
@@ -156,9 +156,9 @@ public class BaseDAO<T extends POJO> implements DAO<T>{
         }
 
         for(Integer index = 0 ; index < entityList.size() ; index++){
-            if(affectedNum[index] == PreparedStatement.EXECUTE_FAILED) return false;
+            if(affectedNum[index] == PreparedStatement.EXECUTE_FAILED) return null;
         }
-        return true;
+        return 0;
     }
 
     @Override
@@ -185,7 +185,7 @@ public class BaseDAO<T extends POJO> implements DAO<T>{
     public Integer batchSave(List<T> entityList , Boolean isForce) {
         Connection conn = null;
         PreparedStatement pstmt = null;
-        String sqlTemplate = null;
+        String sqlTemplate;
         int[] affectedNum = null;
 
         try{
@@ -225,8 +225,8 @@ public class BaseDAO<T extends POJO> implements DAO<T>{
     public Integer _save(T entity , Boolean isForce) throws SQLException, InvocationTargetException, IllegalAccessException {
         Connection conn = null;
         PreparedStatement pstmt = null;
-        ResultSet rs = null;
-        String sqlTemplate = null;
+        ResultSet rs;
+        String sqlTemplate;
         Integer id = null;
 
         try{
@@ -267,8 +267,8 @@ public class BaseDAO<T extends POJO> implements DAO<T>{
         Connection conn = null;
         PreparedStatement pstmt = null;
         Integer affectedNum = 0;
-        String sqlTemplate = null;
-        String tableName = null;
+        String sqlTemplate;
+        String tableName;
 
         try{
             conn = DBManager.getConnection(dbAlias);
@@ -290,9 +290,9 @@ public class BaseDAO<T extends POJO> implements DAO<T>{
     public Integer batchDelete(List<Integer> idList) {
         Connection conn = null;
         PreparedStatement pstmt = null;
-        String sqlTemplate = null;
+        String sqlTemplate;
         Integer affectedNum = 0;
-        T entity = null;
+        T entity;
 
         try{
             entity = classType.newInstance();
@@ -322,7 +322,7 @@ public class BaseDAO<T extends POJO> implements DAO<T>{
         Connection conn = null;
         PreparedStatement pstmt = null;
         Integer affectedNum = 0;
-        String sqlTemplate = null;
+        String sqlTemplate;
 
         try{
             conn = DBManager.getConnection(dbAlias);
@@ -346,7 +346,7 @@ public class BaseDAO<T extends POJO> implements DAO<T>{
         Connection conn = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;
-        String sqlTemplate = null;
+        String sqlTemplate;
         T result = null;
 
         try{
@@ -354,6 +354,37 @@ public class BaseDAO<T extends POJO> implements DAO<T>{
             sqlTemplate = sqlParser.get(entity,params);
             pstmt = conn.prepareStatement(sqlTemplate);
             pstmt = sqlParser.setParameter(entity,false,pstmt,true);
+
+            rs = pstmt.executeQuery();
+
+            result = (T) resultSetParser.parse(classType,rs,params);
+
+        }catch(Exception e){
+            logger.error("fail to get entity data!!!",e);
+        }finally {
+            DBManager.close(rs);
+            DBManager.close(pstmt);
+            DBManager.close(conn);
+        }
+
+        return result;
+    }
+
+    @Override
+    public T get(Integer id,String... params){
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+        String sqlTemplate;
+        T result = null;
+
+        try{
+            String tableName = this.classType.newInstance()._tableName();
+            String pk = this.classType.newInstance()._primaryKey();
+
+            conn = DBManager.getConnection(dbAlias);
+            sqlTemplate = sqlParser.get(id,tableName,pk,params);
+            pstmt = conn.prepareStatement(sqlTemplate);
 
             rs = pstmt.executeQuery();
 
